@@ -36,8 +36,8 @@ public class Bank implements IBank {
 
 	private IKlant getKlant(String name, String city) {
 <span class="fc bfc" id="L38" title="All 2 branches covered.">		for (IKlant k : clients) {</span>
-<span class="pc bpc" id="L39" title="3 of 4 branches missed.">			if (k.getNaam().equals(name) &amp;&amp; k.getPlaats().equals(city))</span>
-<span class="nc" id="L40">				return k;</span>
+<span class="pc bpc" id="L39" title="1 of 4 branches missed.">			if (k.getNaam().equals(name) &amp;&amp; k.getPlaats().equals(city))</span>
+<span class="fc" id="L40">				return k;</span>
 <span class="fc" id="L41">		}</span>
 <span class="fc" id="L42">		IKlant klant = new Klant(name, city);</span>
 <span class="fc" id="L43">		clients.add(klant);</span>
