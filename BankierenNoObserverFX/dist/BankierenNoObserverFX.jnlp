@@ -7,8 +7,8 @@
     <offline-allowed/>
   </information>
   <resources>
-    <j2se version="1.6+" java-vm-args="-javaagent:"C:\Users\hugoL\AppData\Roaming\NetBeans\8.0.1\modules\ext\jacocoagent.jar"=includes=bank.*:fontys.*:bank.bankieren.*:bank.gui.*:bank.internettoegang.*:bank.server.*:fontys.util.*,destfile="C:\Users\hugoL\Documents\GitHub\GSOberoepsproduct5\BankierenNoObserverFX\jacoco.exec-1966499152614247" "  href="http://java.sun.com/products/autodl/j2se"/>
-    <jar href="BankierenNoObserverFX.jar" size="39336" download="eager" />
+    <j2se version="1.6+" href="http://java.sun.com/products/autodl/j2se"/>
+    <jar href="BankierenNoObserverFX.jar" size="39376" download="eager" />
   </resources>
 <security>
   <all-permissions/>
