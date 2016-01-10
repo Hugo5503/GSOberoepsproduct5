@@ -9,62 +9,83 @@ import bank.bankieren.Money;
 
 import fontys.util.InvalidSessionException;
 import fontys.util.NumberDoesntExistException;
+import java.beans.PropertyChangeEvent;
 
 public class Bankiersessie extends UnicastRemoteObject implements
-		IBankiersessie {
+        IBankiersessie {
 
-	private static final long serialVersionUID = 1L;
-	private long laatsteAanroep;
-	private int reknr;
-	private IBank bank;
+    private static final long serialVersionUID = 1L;
+    private long laatsteAanroep;
+    private int reknr;
+    private IBank bank;
+    private BasicPublisher bp;
 
-	public Bankiersessie(int reknr, IBank bank) throws RemoteException {
-		laatsteAanroep = System.currentTimeMillis();
-		this.reknr = reknr;
-		this.bank = bank;
-		
-	}
+    public Bankiersessie(int reknr, IBank bank) throws RemoteException {
+        laatsteAanroep = System.currentTimeMillis();
+        this.reknr = reknr;
+        this.bank = bank;
+        bank.addListener(this, String.valueOf(reknr));
+        bp = new BasicPublisher(new String[]{"sessie"});
+    }
 
-	public boolean isGeldig() {
-		return System.currentTimeMillis() - laatsteAanroep < GELDIGHEIDSDUUR;
-	}
+    public boolean isGeldig() {
+        return System.currentTimeMillis() - laatsteAanroep < GELDIGHEIDSDUUR;
+    }
 
-	@Override
-	public boolean maakOver(int bestemming, Money bedrag)
-			throws NumberDoesntExistException, InvalidSessionException,
-			RemoteException {
-		
-		updateLaatsteAanroep();
-		
-		if (reknr == bestemming)
-			throw new RuntimeException(
-					"source and destination must be different");
-		if (!bedrag.isPositive())
-			throw new RuntimeException("amount must be positive");
-		
-		return bank.maakOver(reknr, bestemming, bedrag);
-	}
+    @Override
+    public boolean maakOver(int bestemming, Money bedrag)
+            throws NumberDoesntExistException, InvalidSessionException,
+            RemoteException {
 
-	private void updateLaatsteAanroep() throws InvalidSessionException {
-		if (!isGeldig()) {
-			throw new InvalidSessionException("session has been expired");
-		}
-		
-		laatsteAanroep = System.currentTimeMillis();
-	}
+        updateLaatsteAanroep();
 
-	@Override
-	public IRekening getRekening() throws InvalidSessionException,
-			RemoteException {
+        if (reknr == bestemming) {
+            throw new RuntimeException(
+                    "source and destination must be different");
+        }
+        if (!bedrag.isPositive()) {
+            throw new RuntimeException("amount must be positive");
+        }
 
-		updateLaatsteAanroep();
-		
-		return bank.getRekening(reknr);
-	}
+        return bank.maakOver(reknr, bestemming, bedrag);
+    }
 
-	@Override
-	public void logUit() throws RemoteException {
-		UnicastRemoteObject.unexportObject(this, true);
-	}
+    private void updateLaatsteAanroep() throws InvalidSessionException {
+        if (!isGeldig()) {
+            throw new InvalidSessionException("session has been expired");
+        }
+
+        laatsteAanroep = System.currentTimeMillis();
+    }
+
+    @Override
+    public IRekening getRekening() throws InvalidSessionException,
+            RemoteException {
+
+        updateLaatsteAanroep();
+
+        return bank.getRekening(reknr);
+    }
+
+    @Override
+    public void logUit() throws RemoteException {
+        UnicastRemoteObject.unexportObject(this, true);
+    }
+
+    @Override
+    public void propertyChange(PropertyChangeEvent evt) throws RemoteException {
+        bp.inform(this, "sessie", null, evt.getNewValue());
+        System.out.println(reknr + " " + evt.getNewValue());
+    }
+
+    @Override
+    public void addListener(IRemotePropertyListener listener, String property) throws RemoteException {
+        bp.addListener(listener, property);
+    }
+
+    @Override
+    public void removeListener(IRemotePropertyListener listener, String property) throws RemoteException {
+        bp.removeListener(listener, property);
+    }
 
 }

@@ -6,8 +6,9 @@ import bank.bankieren.IRekening;
 import bank.bankieren.Money;
 import fontys.util.InvalidSessionException;
 import fontys.util.NumberDoesntExistException;
+import org.omg.CORBA.IRObject;
 
-public interface IBankiersessie extends Remote {
+public interface IBankiersessie extends Remote, IRemotePropertyListener, IRemotePublisher{
 	
 	long GELDIGHEIDSDUUR = 600000; 
 	/**

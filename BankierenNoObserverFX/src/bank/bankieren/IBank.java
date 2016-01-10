@@ -1,12 +1,14 @@
 package bank.bankieren;
 
+import bank.internettoegang.IRemotePublisher;
 import fontys.util.*;
+import java.rmi.RemoteException;
 
 /**
  * @author 871059
  * 
  */
-public interface IBank {
+public interface IBank extends IRemotePublisher{
 
     /**
      * creatie van een nieuwe bankrekening met een identificerend rekeningnummer; 
@@ -50,4 +52,6 @@ public interface IBank {
      * @return de naam van deze bank
      */
     String getName();
+    
+    public boolean muteer(int destination, Money bedrag) throws RemoteException;
 }
