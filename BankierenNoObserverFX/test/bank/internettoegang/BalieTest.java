@@ -53,7 +53,7 @@ public class BalieTest {
      * Test of openRekening method, of class Balie.
      */
     @Test
-    public void testOpenRekening() {
+    public void testOpenRekening() throws RemoteException {
         System.out.println("openRekening");
         String naam = "Hans";
         String plaats = "Eindhoven";

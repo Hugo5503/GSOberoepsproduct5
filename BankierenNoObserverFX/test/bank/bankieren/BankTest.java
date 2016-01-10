@@ -55,7 +55,7 @@ public class BankTest {
      * Test of openRekening method, of class Bank.
      */
     @Test
-    public void testOpenRekening() {
+    public void testOpenRekening() throws RemoteException {
         System.out.println("openRekening");
         String name = "";
         String city = "Eindhoven";
@@ -107,22 +107,22 @@ public class BankTest {
     }
     
     @Test(expected = RuntimeException.class)
-    public void testMaakOverDubbelesource() throws NumberDoesntExistException {
+    public void testMaakOverDubbelesource() throws NumberDoesntExistException, RemoteException {
         b.maakOver(100000000, 100000000, new Money(200, "€"));
     }
     
     @Test(expected = RuntimeException.class)
-    public void testMaakOverNegatiefBedrag() throws NumberDoesntExistException {
+    public void testMaakOverNegatiefBedrag() throws NumberDoesntExistException, RemoteException {
         b.maakOver(100000000, 100000001, new Money(-200, "€"));
     }
     
     @Test(expected = NumberDoesntExistException.class)
-    public void testMaakOverNonExcistSource() throws NumberDoesntExistException {
+    public void testMaakOverNonExcistSource() throws NumberDoesntExistException, RemoteException {
         b.maakOver(1, 100000001, new Money(200, "€"));
     }
     
     @Test(expected = NumberDoesntExistException.class)
-    public void testMaakOverNonExcistDest() throws NumberDoesntExistException {
+    public void testMaakOverNonExcistDest() throws NumberDoesntExistException, RemoteException {
         b.maakOver(100000000, 1, new Money(200, "€"));
     }
 

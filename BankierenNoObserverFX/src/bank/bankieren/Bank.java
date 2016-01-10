@@ -2,11 +2,17 @@ package bank.bankieren;
 
 import bank.internettoegang.BasicPublisher;
 import bank.internettoegang.IRemotePropertyListener;
+import bank.server.IBankCentrale;
 import fontys.util.*;
+import java.net.MalformedURLException;
+import java.rmi.Naming;
+import java.rmi.NotBoundException;
 
 import java.rmi.RemoteException;
 import java.rmi.server.UnicastRemoteObject;
 import java.util.*;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 public class Bank extends UnicastRemoteObject implements IBank {
 
@@ -16,29 +22,40 @@ public class Bank extends UnicastRemoteObject implements IBank {
 	private static final long serialVersionUID = -8728841131739353765L;
 	private Map<Integer,IRekeningTbvBank> accounts;
 	private Collection<IKlant> clients;
-	private int nieuwReknr;
+	//private int nieuwReknr;
 	private String name;
+        private final BasicPublisher publisher;
         private BasicPublisher bp;
+        private IBankCentrale bc;
 
 	public Bank(String name) throws RemoteException {
             accounts = new HashMap<Integer,IRekeningTbvBank>();
             clients = new ArrayList<IKlant>();
-            nieuwReknr = 100000000;	
+            //nieuwReknr = 100000000;	
             this.name = name;
-            String[] publishString = new String[1];
-            publishString[0] = "saldo";
-            this.bp = new BasicPublisher(publishString);
+            publisher = new BasicPublisher(new String[]{});
+            //String[] publishString = new String[1];
+            try {
+                bc = (IBankCentrale) Naming.lookup("Centrale");
+            } 
+            catch (NotBoundException | MalformedURLException ex)
+            {
+               Logger.getLogger(Bank.class.getName()).log(Level.SEVERE, null, ex);
+            }
+            //publishString[0] = "saldo";
+            //this.bp = new BasicPublisher(publishString);
 	}
 
-	public int openRekening(String name, String city) {
-            if (name.equals("") || city.equals(""))
-                    return -1;
-
+	public int openRekening(String name, String city) throws RemoteException {
+            if (name.equals("") || city.equals("")){
+                return -1;
+            }
+            int nieuwReknr = bc.openRekening(this.name);
             IKlant klant = getKlant(name, city);
             IRekeningTbvBank account = new Rekening(nieuwReknr, klant, Money.EURO);
             accounts.put(nieuwReknr,account);
-            nieuwReknr++;
-            return nieuwReknr-1;
+            bp.addProperty(String.valueOf(nieuwReknr));
+            return nieuwReknr;
 	}
 
 	private IKlant getKlant(String name, String city) {
@@ -56,7 +73,7 @@ public class Bank extends UnicastRemoteObject implements IBank {
 	}
 
         @Override
-	public boolean maakOver(int source, int destination, Money money) throws NumberDoesntExistException{
+	public boolean maakOver(int source, int destination, Money money) throws NumberDoesntExistException, RemoteException{
             if (source == destination){
                 throw new RuntimeException("cannot transfer money to your own account");
             }
@@ -74,16 +91,31 @@ public class Bank extends UnicastRemoteObject implements IBank {
             }
 
             IRekeningTbvBank dest_account = (IRekeningTbvBank) getRekening(destination);
+            boolean islocal = false;
             if (dest_account == null){ 
-                throw new NumberDoesntExistException("account " + destination + " unknown at " + name);
+//                throw new NumberDoesntExistException("account " + destination + " unknown at " + name);
+                success = bc.maakOver(destination, money);
             }
             success = dest_account.muteer(money);
             if (!success){ // rollback
-                source_account.muteer(money);
+//                source_account.muteer(money);
+                throw new NumberDoesntExistException("account " + destination + " unknown at " + name);
             }
             else{
-                bp.inform(this, "saldo", null, null);
+                islocal = true;
+//                bp.inform(this, "saldo", null, null);
+                success = dest_account.muteer(money);
             }
+            
+            if (!success) {
+                source_account.muteer(money);
+            }
+            else {
+            publisher.inform(this, String.valueOf(source), null, source_account.getSaldo().getValue());
+            if (islocal) {
+                publisher.inform(this, String.valueOf(destination), null, dest_account.getSaldo().getValue());
+            }
+        }
             return success;
 	}
 
