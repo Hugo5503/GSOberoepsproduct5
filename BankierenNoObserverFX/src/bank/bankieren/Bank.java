@@ -16,85 +16,87 @@ import java.util.logging.Logger;
 
 public class Bank extends UnicastRemoteObject implements IBank {
 
-	/**
-	 * 
-	 */
 	private static final long serialVersionUID = -8728841131739353765L;
-	private Map<Integer,IRekeningTbvBank> accounts;
-	private Collection<IKlant> clients;
-	//private int nieuwReknr;
-	private String name;
-        private final BasicPublisher publisher;
-        private BasicPublisher bp;
-        private IBankCentrale bc;
+    private Map<Integer, IRekeningTbvBank> accounts;
+    private Collection<IKlant> clients;
+    // private int nieuwReknr;
+    private String name;
+    private final BasicPublisher publisher;
+    private IBankCentrale centrale;
 
-	public Bank(String name) throws RemoteException {
-            accounts = new HashMap<Integer,IRekeningTbvBank>();
-            clients = new ArrayList<IKlant>();
-            //nieuwReknr = 100000000;	
-            this.name = name;
-            publisher = new BasicPublisher(new String[]{});
-            //String[] publishString = new String[1];
-            try {
-                bc = (IBankCentrale) Naming.lookup("Centrale");
-            } 
-            catch (NotBoundException | MalformedURLException ex)
-            {
-               Logger.getLogger(Bank.class.getName()).log(Level.SEVERE, null, ex);
-            }
-            //publishString[0] = "saldo";
-            //this.bp = new BasicPublisher(publishString);
-	}
+    public Bank(String name) throws RemoteException {
+        accounts = new HashMap<Integer, IRekeningTbvBank>();
+        clients = new ArrayList<IKlant>();
+        //nieuwReknr = 100000000;
+        this.name = name;
+        publisher = new BasicPublisher(new String[]{});
+        try {
+            centrale = (IBankCentrale) Naming.lookup("Centrale");
+        } catch (NotBoundException | MalformedURLException ex) {
+            Logger.getLogger(Bank.class.getName()).log(Level.SEVERE, null, ex);
+        }
+    }
 
-	public int openRekening(String name, String city) throws RemoteException {
-            if (name.equals("") || city.equals("")){
-                return -1;
-            }
-            int nieuwReknr = bc.openRekening(this.name);
-            IKlant klant = getKlant(name, city);
-            IRekeningTbvBank account = new Rekening(nieuwReknr, klant, Money.EURO);
-            accounts.put(nieuwReknr,account);
-            bp.addProperty(String.valueOf(nieuwReknr));
-            return nieuwReknr;
-	}
+    @Override
+    public int openRekening(String name, String city) throws RemoteException {
+        if (name.equals("") || city.equals("")) {
+            return -1;
+        }
 
-	private IKlant getKlant(String name, String city) {
-            for (IKlant k : clients) {
-                    if (k.getNaam().equals(name) && k.getPlaats().equals(city))
-                            return k;
-            }
-            IKlant klant = new Klant(name, city);
-            clients.add(klant);
-            return klant;
-	}
+        int nieuwReknr = centrale.openRekening(this.name);
 
-	public IRekening getRekening(int nr) {
-		return accounts.get(nr);
-	}
+        IKlant klant = getKlant(name, city);
+        IRekeningTbvBank account = new Rekening(nieuwReknr, klant, Money.EURO);
+        accounts.put(nieuwReknr, account);
+        publisher.addProperty(String.valueOf(nieuwReknr));
+        return nieuwReknr;
+    }
 
-        @Override
-	public boolean maakOver(int source, int destination, Money money) throws NumberDoesntExistException, RemoteException{
-            if (source == destination){
-                throw new RuntimeException("cannot transfer money to your own account");
+    private IKlant getKlant(String name, String city) {
+        for (IKlant k : clients) {
+            if (k.getNaam().equals(name) && k.getPlaats().equals(city)) {
+                return k;
             }
-            if (!money.isPositive()){
-                throw new RuntimeException("money must be positive");
-            }
-            IRekeningTbvBank source_account = (IRekeningTbvBank) getRekening(source);
-            if (source_account == null){
-                    throw new NumberDoesntExistException("account " + source + " unknown at " + name);
-            }
-            Money negative = Money.difference(new Money(0, money.getCurrency()),money);
-            boolean success = source_account.muteer(negative);
-            if (!success){
-                return false;
-            }
+        }
+        IKlant klant = new Klant(name, city);
+        clients.add(klant);
+        return klant;
+    }
 
-            IRekeningTbvBank dest_account = (IRekeningTbvBank) getRekening(destination);
-            boolean islocal = false;
+    @Override
+    public IRekening getRekening(int nr) {
+        return accounts.get(nr);
+    }
+
+    @Override
+    public boolean maakOver(int source, int destination, Money money)
+            throws NumberDoesntExistException, RemoteException {
+        if (source == destination) {
+            throw new RuntimeException(
+                    "cannot transfer money to your own account");
+        }
+        if (!money.isPositive()) {
+            throw new RuntimeException("money must be positive");
+        }
+
+        IRekeningTbvBank source_account = (IRekeningTbvBank) getRekening(source);
+        if (source_account == null) {
+            throw new NumberDoesntExistException("account " + source
+                    + " unknown at " + name);
+        }
+
+        Money negative = Money.difference(new Money(0, money.getCurrency()),
+                money);
+        boolean success = source_account.muteer(negative);
+        if (!success) {
+            return false;
+        }
+
+        IRekeningTbvBank dest_account = (IRekeningTbvBank) getRekening(destination);
+        boolean islocal = false;
         if (dest_account == null) {
             // maak over bij de centrale
-            success = bc.maakOver(destination, money);
+            success = centrale.maakOver(destination, money);
             if (!success) {
                 throw new NumberDoesntExistException("account " + destination
                         + " unknown");
@@ -116,19 +118,19 @@ public class Bank extends UnicastRemoteObject implements IBank {
         return success;
     }
 
-	@Override
-	public String getName() {
-            return name;
-	}
+    @Override
+    public String getName() {
+        return name;
+    }
 
     @Override
     public void addListener(IRemotePropertyListener listener, String property) throws RemoteException {
-        bp.addListener(listener, property);
+        publisher.addListener(listener, property);
     }
 
     @Override
     public void removeListener(IRemotePropertyListener listener, String property) throws RemoteException {
-        bp.removeListener(listener, property);
+        publisher.removeListener(listener, property);
     }
 
     @Override
@@ -136,7 +138,7 @@ public class Bank extends UnicastRemoteObject implements IBank {
         boolean result = accounts.get(destination).muteer(bedrag);
         if (result) {
             IRekening rekening = getRekening(destination);
-            bp.inform(this, String.valueOf(destination), null, rekening.getSaldo().getValue());
+            publisher.inform(this, String.valueOf(destination), null, rekening.getSaldo().getValue());
         }
         return result;
     }
