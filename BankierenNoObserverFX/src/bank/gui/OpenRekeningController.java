@@ -58,6 +58,7 @@ public class OpenRekeningController  implements Initializable {
             String accountNaam;
             accountNaam = balie.openRekening(tfName.getText(), tfCity.getText(), tfPassWord.getText());
             if (accountNaam == null) {
+                System.out.println("er gaat iets fout.");
                 return;
             }
             System.out.println("account:"+accountNaam);

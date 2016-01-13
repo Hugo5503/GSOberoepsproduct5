@@ -92,32 +92,29 @@ public class Bank extends UnicastRemoteObject implements IBank {
 
             IRekeningTbvBank dest_account = (IRekeningTbvBank) getRekening(destination);
             boolean islocal = false;
-            if (dest_account == null){ 
-//                throw new NumberDoesntExistException("account " + destination + " unknown at " + name);
-                success = bc.maakOver(destination, money);
-            }
-            success = dest_account.muteer(money);
-            if (!success){ // rollback
-//                source_account.muteer(money);
-                throw new NumberDoesntExistException("account " + destination + " unknown at " + name);
-            }
-            else{
-                islocal = true;
-//                bp.inform(this, "saldo", null, null);
-                success = dest_account.muteer(money);
-            }
-            
+        if (dest_account == null) {
+            // maak over bij de centrale
+            success = bc.maakOver(destination, money);
             if (!success) {
-                source_account.muteer(money);
+                throw new NumberDoesntExistException("account " + destination
+                        + " unknown");
             }
-            else {
+        } else {
+            islocal = true;
+            success = dest_account.muteer(money);
+        }
+
+        if (!success) // rollback
+        {
+            source_account.muteer(money);
+        } else {
             publisher.inform(this, String.valueOf(source), null, source_account.getSaldo().getValue());
             if (islocal) {
                 publisher.inform(this, String.valueOf(destination), null, dest_account.getSaldo().getValue());
             }
         }
-            return success;
-	}
+        return success;
+    }
 
 	@Override
 	public String getName() {
