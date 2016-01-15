@@ -21,6 +21,7 @@ public interface IBank extends IRemotePublisher{
      *            de woonplaats van de eigenaar van de nieuwe bankrekening
      * @return -1 zodra naam of plaats een lege string en anders het nummer van de
      *         gecreeerde bankrekening
+     * @throws java.rmi.RemoteException
      */
     int openRekening(String naam, String plaats) throws RemoteException;
 
@@ -38,6 +39,7 @@ public interface IBank extends IRemotePublisher{
      * @return <b>true</b> als de overmaking is gelukt, anders <b>false</b>
      * @throws NumberDoesntExistException
      *             als een van de twee bankrekeningnummers onbekend is
+     * @throws java.rmi.RemoteException
      */
     boolean maakOver(int bron, int bestemming, Money bedrag)
             throws NumberDoesntExistException, RemoteException;
@@ -45,13 +47,22 @@ public interface IBank extends IRemotePublisher{
     /**
      * @param nr
      * @return de bankrekening met nummer nr mits bij deze bank bekend, anders null
+     * @throws java.rmi.RemoteException
      */
     IRekening getRekening(int nr) throws RemoteException;
 
     /**
      * @return de naam van deze bank
+     * @throws java.rmi.RemoteException
      */
     String getName()throws RemoteException;
     
+    /**
+     *
+     * @param destination
+     * @param bedrag
+     * @return
+     * @throws RemoteException
+     */
     public boolean muteer(int destination, Money bedrag) throws RemoteException;
 }

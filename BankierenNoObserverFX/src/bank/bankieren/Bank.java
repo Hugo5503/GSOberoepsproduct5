@@ -3,7 +3,6 @@ package bank.bankieren;
 import bank.server.IBankCentrale;
 import bank.internettoegang.BasicPublisher;
 import bank.internettoegang.IRemotePropertyListener;
-import bank.internettoegang.IRemotePublisher;
 import fontys.util.*;
 import java.net.MalformedURLException;
 import java.rmi.Naming;
@@ -15,6 +14,10 @@ import java.util.*;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+/**
+ *
+ * @author Ruud
+ */
 public class Bank extends UnicastRemoteObject implements IBank {
 
     /**
@@ -28,6 +31,11 @@ public class Bank extends UnicastRemoteObject implements IBank {
     private final BasicPublisher publisher;
     private IBankCentrale centrale;
 
+    /**
+     *
+     * @param name
+     * @throws RemoteException
+     */
     public Bank(String name) throws RemoteException {
         accounts = new HashMap<Integer, IRekeningTbvBank>();
         clients = new ArrayList<IKlant>();
@@ -137,6 +145,13 @@ public class Bank extends UnicastRemoteObject implements IBank {
         publisher.removeListener(listener, property);
     }
 
+    /**
+     *
+     * @param destination
+     * @param bedrag
+     * @return
+     * @throws RemoteException
+     */
     @Override
     public boolean muteer(int destination, Money bedrag) throws RemoteException {
         boolean result = accounts.get(destination).muteer(bedrag);
