@@ -29,6 +29,13 @@ public class BankCentrale extends UnicastRemoteObject implements IBankCentrale {
         rekeningNummers = new HashMap<>();
     }
 
+    /**
+     * Maakt een nieuw rekeningnummer aan die in de hashmap gezet kan worden
+     *
+     * @param bankNaam
+     * @return Het nummer van de zojuist geopende rekening
+     * @throws RemoteException
+     */
     @Override
     public synchronized int openRekening(String bankNaam) {
         int newNumber = nextRekeningNummer;
@@ -37,6 +44,15 @@ public class BankCentrale extends UnicastRemoteObject implements IBankCentrale {
         return newNumber;
     }
 
+    /**
+     * Maakt geld als de bank van de tegenrekening geopend is.
+     *
+     * @param destination
+     * @param bedrag
+     * @return {@code true} al het geld succesvol is overgemaakt {@code false}
+     * als het geld niet overgemaakt kan worden
+     * @throws RemoteException
+     */
     @Override
     public boolean maakOver(int destination, Money bedrag) throws RemoteException {
         String bank = rekeningNummers.get(destination);
