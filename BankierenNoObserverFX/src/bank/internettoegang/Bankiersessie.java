@@ -24,7 +24,7 @@ public class Bankiersessie extends UnicastRemoteObject implements
         laatsteAanroep = System.currentTimeMillis();
         this.reknr = reknr;
         this.bank = bank;
-        this.bank.addListener(this, String.valueOf(this.reknr));
+        bank.addListener(this, String.valueOf(this.reknr));
         bp = new BasicPublisher(new String[]{"sessie"});
     }
 
